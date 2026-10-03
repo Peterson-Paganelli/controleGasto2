@@ -24,7 +24,19 @@ Para parar os serviços, pressione `Ctrl+C` e execute `docker compose down`. Os 
 
 As mudanças em `frontend/src/` e `backend/app/` são recarregadas automaticamente. Ao alterar dependências ou arquivos de configuração, execute `docker compose up --build` novamente.
 
-Nesta etapa, `/health` confirma apenas que a API responde. A conexão com o banco e as migrations serão implementadas na S1-02.
+`/health` confirma que a API responde.
+
+## Usuários (S1-02)
+
+A migração inicial cria `users` com `id` único, `email` único e `password_hash` (hash Argon2). Ela é aplicada automaticamente ao iniciar o backend.
+
+O acesso ao banco usa `SessionLocal` em `backend/app/database.py`. O `UserRepository`, em `backend/app/repositories.py`, cria usuários recebendo e-mail e senha, gera o hash antes de salvar e permite buscar por ID ou e-mail.
+
+Para aplicar a migração manualmente:
+
+```sh
+docker compose exec backend alembic upgrade head
+```
 
 ## Sprint 1
 
