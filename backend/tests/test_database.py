@@ -35,9 +35,9 @@ class DatabaseTests(unittest.TestCase):
         migrate()
         migrate()
         rows = self.connection.execute(
-            "SELECT version FROM public.schema_migrations"
+            "SELECT version FROM public.schema_migrations ORDER BY version"
         ).fetchall()
-        self.assertEqual(rows, [("001_usuarios_e_gastos.sql",)])
+        self.assertEqual(rows, [("001_usuarios_e_gastos.sql",), ("002_sessoes.sql",)])
 
     def test_account_and_login(self):
         self.create_account()

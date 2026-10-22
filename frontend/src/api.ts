@@ -1,6 +1,14 @@
 export type Usuario = { id: number; nome: string; email: string }
 export type Token = { access_token: string; token_type: string }
 
+export class ErroApi extends Error {
+  status: number
+  constructor(mensagem: string, status: number) {
+    super(mensagem)
+    this.status = status
+  }
+}
+
 export async function api<T>(rota: string, opcoes: RequestInit = {}): Promise<T> {
   let resposta: Response
   try {
@@ -12,9 +20,10 @@ export async function api<T>(rota: string, opcoes: RequestInit = {}): Promise<T>
     throw new Error('Não foi possível conectar ao serviço. Tente novamente.')
   }
 
+  if (resposta.status === 204) return undefined as T
   const corpo = await resposta.json().catch(() => null)
   if (resposta.status === 401) {
-    throw new Error(rota === '/login' ? 'E-mail ou senha inválidos.' : 'Sua sessão expirou. Entre novamente.')
+    throw new ErroApi(rota === '/login' ? 'E-mail ou senha inválidos.' : 'Sua sessão expirou. Entre novamente.', 401)
   }
   if (resposta.status === 409 || resposta.status === 422) {
     // A API retorna apenas campo e mensagem, sem os dados enviados.
