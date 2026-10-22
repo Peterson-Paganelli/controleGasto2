@@ -55,8 +55,8 @@ não recria as tabelas nem apaga dados. Para mudanças futuras, adicione outro a
 SQL numerado em `backend/migrations/`, sem editar migrations já aplicadas.
 
 O backup e os cadastros de exemplo do ZIP não são importados. As rotinas estão
-disponíveis no banco. O endpoint de cadastro (`POST /cadastro`) já está implementado;
-telas, login e endpoints de gastos ainda não.
+disponíveis no banco. Os endpoints de cadastro (`POST /cadastro`) e login (`POST /login`) já estão implementados;
+telas e endpoints de gastos ainda não.
 As rotinas usam `dados_pessoal`. Tabelas de versões anteriores, como `users` e
 `alembic_version`, são preservadas caso existam no volume, mas não são sincronizadas
 com a nova estrutura.
@@ -105,6 +105,28 @@ curl -X POST http://localhost:8000/cadastro -H "Content-Type: application/json" 
 é recusado, e senhas devem ter de 1 a 72 bytes. O banco também impede gravar senha em
 texto puro: a coluna `dados_pessoal.senha` só aceita hashes BCrypt.
 
+## Login e rotas protegidas (S1-05)
+
+`POST /login` recebe `email` e `senha` em JSON, verifica a senha pelo componente
+BCrypt e retorna `{"access_token": "...", "token_type": "bearer"}`.
+E-mail ou senha incorretos retornam `401` com a mensagem `E-mail ou senha inválidos.`.
+
+O token JWT vale por 30 minutos. Envie `Authorization: Bearer <access_token>`
+para acessar `GET /me`, que retorna apenas `id`, `nome` e `email` do usuário autenticado.
+Token ausente, inválido, expirado ou de usuário removido retorna `401`.
+Para proteger novas rotas, use `Depends(usuario_autenticado)` de `app.auth`.
+
+```sh
+curl -X POST http://localhost:8000/login -H "Content-Type: application/json" \
+  -d '{"email":"maria@example.com","senha":"senha-de-teste"}'
+curl http://localhost:8000/me -H "Authorization: Bearer <access_token>"
+```
+
+Configure `JWT_SECRET` no `.env` com uma chave aleatória de pelo menos 32 bytes
+para manter os tokens após reiniciar e compartilhar a chave entre instâncias.
+Você pode gerar uma com `python -c "import secrets; print(secrets.token_hex(32))"`.
+Sem essa variável, a API gera uma chave temporária a cada inicialização.
+
 ## Testes do banco
 
 Os testes usam um banco separado com nome terminado em `_test` e removem os
@@ -119,6 +141,9 @@ docker compose run --rm -e POSTGRES_DB=cgp_test backend python -m unittest disco
 Crie `cgp_test` apenas na primeira execução. Os testes verificam reaplicação das
 migrations, cadastro (banco e endpoint), hash BCrypt e validação de senha, unicidade, chave estrangeira,
 valores monetários, exclusão por dono e saúde da conexão.
+Os testes HTTP de login usam banco simulado e podem rodar sem PostgreSQL:
+`python -m unittest discover -s tests -p test_login.py -v` (dentro de `backend/`,
+com as dependências de `requirements.txt` instaladas).
 
 ## Sprint 1
 

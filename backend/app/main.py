@@ -1,13 +1,14 @@
 from contextlib import asynccontextmanager
 
 import psycopg
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
+from app.auth import criar_token, usuario_autenticado
 from app.database import connect, migrate
-from app.schemas import CadastroEntrada, UsuarioSaida
-from app.senhas import gerar_hash
+from app.schemas import CadastroEntrada, LoginEntrada, TokenSaida, UsuarioSaida
+from app.senhas import gerar_hash, verificar_senha
 
 # Constraints UNIQUE criadas na migration 001 -> campo exibido ao usuário.
 CAMPOS_UNICOS = {
@@ -74,3 +75,27 @@ def cadastrar(dados: CadastroEntrada) -> UsuarioSaida:
         raise HTTPException(status_code=503, detail="Banco indisponível") from error
 
     return UsuarioSaida(id=linha[0], nome=linha[1], email=linha[2])
+
+
+@app.post("/login", response_model=TokenSaida)
+def login(dados: LoginEntrada) -> TokenSaida:
+    try:
+        with connect() as connection:
+            linha = connection.execute(
+                "SELECT id_dadopessoal, senha FROM public.dados_pessoal WHERE email = %s",
+                (dados.email.strip().lower(),),
+            ).fetchone()
+        if linha is None or not verificar_senha(dados.senha, linha[1]):
+            raise HTTPException(
+                status_code=401,
+                detail="E-mail ou senha inválidos.",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+    except psycopg.OperationalError as error:
+        raise HTTPException(status_code=503, detail="Banco indisponível") from error
+    return TokenSaida(access_token=criar_token(linha[0]))
+
+
+@app.get("/me", response_model=UsuarioSaida)
+def consultar_usuario(usuario: UsuarioSaida = Depends(usuario_autenticado)) -> UsuarioSaida:
+    return usuario
