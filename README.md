@@ -77,8 +77,8 @@ ROLLBACK;
 
 ## Cadastro (S1-03)
 
-`POST /cadastro` recebe JSON com `nome`, `cpf`, `telefone`, `email` e `senha` e chama
-`p_criacaodeconta` (hash bcrypt com custo 12).
+`POST /cadastro` recebe JSON com `nome`, `cpf`, `telefone`, `email` e `senha`, gera
+o hash pelo componente `gerar_hash` de S1-04 (bcrypt com custo 12) e salva o usuário.
 
 Validações: nome obrigatório; CPF com 11 dígitos (pontos e traço são removidos);
 telefone com 10 a 13 dígitos; e-mail válido (normalizado em minúsculas); senha com

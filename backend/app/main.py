@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 
 from app.database import connect, migrate
 from app.schemas import CadastroEntrada, UsuarioSaida
+from app.senhas import gerar_hash
 
 # Constraints UNIQUE criadas na migration 001 -> campo exibido ao usuário.
 CAMPOS_UNICOS = {
@@ -54,16 +55,13 @@ def health() -> dict[str, str]:
 
 @app.post("/cadastro", status_code=201, response_model=UsuarioSaida)
 def cadastrar(dados: CadastroEntrada) -> UsuarioSaida:
-    # O hash bcrypt (custo 12) é gerado pela procedure p_criacaodeconta no banco.
     try:
+        senha_hash = gerar_hash(dados.senha)
         with connect() as connection:
-            connection.execute(
-                "CALL public.p_criacaodeconta(%s, %s, %s, %s, %s)",
-                (dados.nome, dados.cpf, dados.telefone, dados.email, dados.senha),
-            )
             linha = connection.execute(
-                "SELECT id_dadopessoal, nome, email FROM public.dados_pessoal WHERE email = %s",
-                (dados.email,),
+                "INSERT INTO public.dados_pessoal (nome, cpf, numero_telefone, email, senha) "
+                "VALUES (%s, %s, %s, %s, %s) RETURNING id_dadopessoal, nome, email",
+                (dados.nome, dados.cpf, dados.telefone, dados.email, senha_hash),
             ).fetchone()
     except psycopg.errors.UniqueViolation as error:
         campo, mensagem = CAMPOS_UNICOS.get(

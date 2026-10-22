@@ -2,6 +2,7 @@ import asyncio
 import json
 import os
 import unittest
+from unittest.mock import patch
 
 from fastapi import HTTPException
 from fastapi.exceptions import RequestValidationError
@@ -10,12 +11,13 @@ from pydantic import ValidationError
 from app.database import connect, migrate
 from app.main import cadastrar, erro_validacao
 from app.schemas import CadastroEntrada
+from app.senhas import gerar_hash
 
 VALIDO = {
     "nome": "  Maria Teste  ",
     "cpf": "987.654.321-00",
     "telefone": "(47) 90000-0001",
-    "email": "  MARIA@Cadastro.Test ",
+    "email": "  MARIA@Cadastro.Example.com ",
     "senha": "senha-de-teste",
 }
 
@@ -38,13 +40,15 @@ class CadastroTests(unittest.TestCase):
         # cadastrar() confirma a transação, então os registros precisam ser removidos.
         with connect() as connection:
             connection.execute(
-                "DELETE FROM public.dados_pessoal WHERE email LIKE '%@cadastro.test'"
+                "DELETE FROM public.dados_pessoal WHERE email LIKE '%@cadastro.example.com'"
             )
 
     def test_cadastro_valido_cria_usuario_com_hash_bcrypt(self):
-        saida = cadastrar(dados())
+        with patch("app.main.gerar_hash", wraps=gerar_hash) as gerar:
+            saida = cadastrar(dados())
+        gerar.assert_called_once_with("senha-de-teste")
         self.assertEqual(saida.nome, "Maria Teste")
-        self.assertEqual(saida.email, "maria@cadastro.test")
+        self.assertEqual(saida.email, "maria@cadastro.example.com")
         with connect() as connection:
             cpf, telefone, senha = connection.execute(
                 "SELECT cpf, numero_telefone, senha FROM public.dados_pessoal WHERE id_dadopessoal = %s",
@@ -52,7 +56,7 @@ class CadastroTests(unittest.TestCase):
             ).fetchone()
             login = connection.execute(
                 "SELECT public.validador_senhaeemail(%s, %s)",
-                ("maria@cadastro.test", "senha-de-teste"),
+                ("maria@cadastro.example.com", "senha-de-teste"),
             ).fetchone()[0]
         self.assertEqual(cpf, "98765432100")
         self.assertEqual(telefone, "47900000001")
@@ -68,8 +72,8 @@ class CadastroTests(unittest.TestCase):
         cadastrar(dados())
         for alteracoes, campo in (
             ({"cpf": "98765432101", "telefone": "47900000002"}, "email"),
-            ({"email": "outro@cadastro.test", "telefone": "47900000002"}, "cpf"),
-            ({"email": "outro@cadastro.test", "cpf": "98765432101"}, "telefone"),
+            ({"email": "outro@cadastro.example.com", "telefone": "47900000002"}, "cpf"),
+            ({"email": "outro@cadastro.example.com", "cpf": "98765432101"}, "telefone"),
         ):
             with self.assertRaises(HTTPException) as falha:
                 cadastrar(dados(**alteracoes))
@@ -79,7 +83,7 @@ class CadastroTests(unittest.TestCase):
     def test_email_repetido_ignora_maiusculas(self):
         cadastrar(dados())
         with self.assertRaises(HTTPException) as falha:
-            cadastrar(dados(cpf="98765432101", telefone="47900000002", email="MARIA@CADASTRO.TEST"))
+            cadastrar(dados(cpf="98765432101", telefone="47900000002", email="MARIA@CADASTRO.EXAMPLE.COM"))
         self.assertEqual(falha.exception.status_code, 409)
 
 
@@ -92,6 +96,8 @@ class ValidacaoTests(unittest.TestCase):
             ("telefone", "123"),
             ("email", "sem-arroba"),
             ("email", "a@b"),
+            ("email", "a..b@example.com"),
+            ("email", "a@-dominio.com"),
             ("senha", "curta"),
             ("senha", "á" * 37),  # 74 bytes, acima do limite do bcrypt
         ):

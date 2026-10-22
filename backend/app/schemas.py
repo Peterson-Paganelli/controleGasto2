@@ -1,8 +1,8 @@
 import re
 
+from email_validator import EmailNotValidError, validate_email
 from pydantic import BaseModel, field_validator
 
-EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 SENHA_MIN_CARACTERES = 8
 SENHA_MAX_BYTES = 72  # limite do bcrypt, o mesmo validado no banco
 
@@ -42,9 +42,10 @@ class CadastroEntrada(BaseModel):
     @classmethod
     def validar_email(cls, valor: str) -> str:
         valor = valor.strip().lower()
-        if len(valor) > 254 or not EMAIL_RE.fullmatch(valor):
-            raise ValueError("Informe um e-mail válido.")
-        return valor
+        try:
+            return validate_email(valor, check_deliverability=False).normalized
+        except EmailNotValidError as error:
+            raise ValueError("Informe um e-mail válido.") from error
 
     @field_validator("senha")
     @classmethod
