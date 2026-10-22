@@ -56,7 +56,7 @@ SQL numerado em `backend/migrations/`, sem editar migrations já aplicadas.
 
 O backup e os cadastros de exemplo do ZIP não são importados. As rotinas estão
 disponíveis no banco. Os endpoints de cadastro (`POST /cadastro`) e login (`POST /login`) já estão implementados;
-telas e endpoints de gastos ainda não.
+As telas de cadastro e login estão integradas; os endpoints de gastos ainda não.
 As rotinas usam `dados_pessoal`. Tabelas de versões anteriores, como `users` e
 `alembic_version`, são preservadas caso existam no volume, mas não são sincronizadas
 com a nova estrutura.
@@ -126,6 +126,25 @@ Configure `JWT_SECRET` no `.env` com uma chave aleatória de pelo menos 32 bytes
 para manter os tokens após reiniciar e compartilhar a chave entre instâncias.
 Você pode gerar uma com `python -c "import secrets; print(secrets.token_hex(32))"`.
 Sem essa variável, a API gera uma chave temporária a cada inicialização.
+
+## Formulários de cadastro e login (S1-07)
+
+Em `http://localhost:5173`, use **Criar conta** para cadastrar nome, CPF, telefone,
+e-mail e senha. Após o cadastro, a tela pede o login e mantém o e-mail preenchido.
+Ao entrar, a interface consulta `/me` com o token e mostra o nome e o e-mail da conta.
+O botão **Sair da conta** encerra a sessão na interface.
+
+Os campos obrigatórios, e-mail, CPF, telefone e tamanho da senha são validados.
+Erros de cadastro, credenciais e conexão aparecem na tela, sem mostrar respostas
+internas, senha, hash ou token. O token fica apenas na memória: recarregar a página
+exige um novo login.
+
+As chamadas usam `/api`, encaminhado pelo proxy do Vite para o backend. No Docker,
+`API_URL` já aponta para `http://backend:8000`. Fora do Docker, o padrão é
+`http://localhost:8000`; rode o frontend com `pnpm install` e `pnpm dev` dentro de
+`frontend/` (ou os comandos equivalentes do npm).
+Para conferir o frontend, execute `pnpm test` e `pnpm build` nessa pasta.
+Os testes da comunicação com a API usam respostas simuladas.
 
 ## Testes do banco
 

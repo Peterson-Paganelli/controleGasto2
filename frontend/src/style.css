@@ -1,19 +1,48 @@
 :root {
-  font-family: Arial, sans-serif;
-  color: #1f2937;
-  background: #f8fafc;
+  font-family: system-ui, -apple-system, sans-serif;
+  color: #172c3d;
+  background: #f2f6f7;
+  font-synthesis: none;
+  line-height: 1.5;
 }
 
-body {
-  margin: 0;
-}
+* { box-sizing: border-box; }
+body { margin: 0; }
 
 main {
-  max-width: 42rem;
-  margin: 4rem auto;
-  padding: 0 1.5rem;
+  max-width: 30rem;
+  margin: 3rem auto;
+  padding: 0 1rem;
 }
 
-a {
-  color: #155eef;
+.marca { display: flex; align-items: center; justify-content: center; gap: .75rem; margin-bottom: 1.5rem; font-weight: 600; }
+.simbolo { padding: .55rem; border-radius: .65rem; background: #176557; color: white; font-size: .8rem; letter-spacing: .05em; }
+.cartao { background: white; border: 1px solid #dbe4e7; border-radius: 1rem; padding: 2rem; box-shadow: 0 8px 30px #172c3d08; }
+h1 { margin: 1.5rem 0 .4rem; font-size: 1.65rem; line-height: 1.25; overflow-wrap: anywhere; }
+.descricao { color: #586b78; margin: 0 0 1.5rem; }
+.modos { display: flex; gap: .25rem; padding: .25rem; border-radius: .6rem; background: #eef3f4; }
+button, input { font: inherit; }
+button { cursor: pointer; }
+.modos button { flex: 1; padding: .6rem; border: 0; border-radius: .4rem; background: transparent; color: #465b68; font-weight: 600; }
+.modos button[aria-pressed="true"] { background: white; color: #176557; box-shadow: 0 1px 4px #172c3d12; }
+fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+label { display: block; margin: 1rem 0 .35rem; font-size: .9rem; font-weight: 600; }
+input { width: 100%; padding: .7rem .8rem; border: 1px solid #b9c9cf; border-radius: .5rem; background: white; color: #172c3d; }
+input::placeholder { color: #758590; }
+input:focus-visible, button:focus-visible { outline: 3px solid #75bfae; outline-offset: 2px; }
+.principal { width: 100%; margin-top: 1.5rem; padding: .75rem; border: 0; border-radius: .5rem; background: #176557; color: white; font-weight: 600; }
+.principal:hover { background: #104e43; }
+button:disabled, fieldset:disabled { cursor: wait; opacity: .65; }
+small { display: block; margin-top: .4rem; color: #586b78; font-size: .8rem; }
+.erro, .sucesso { padding: .8rem; border-radius: .5rem; font-size: .9rem; overflow-wrap: anywhere; }
+.erro { background: #fff0ed; color: #9b2e20; border: 1px solid #f1c8c0; }
+.sucesso { background: #eaf6f0; color: #155d46; border: 1px solid #b7dfcc; }
+.etiqueta { color: #176557; font-size: .75rem; font-weight: 700; letter-spacing: .08em; }
+.email-usuario { padding: .8rem; background: #f2f6f7; border-radius: .5rem; overflow-wrap: anywhere; }
+.rodape { text-align: center; color: #586b78; font-size: .8rem; margin-top: 1.5rem; }
+
+@media (max-width: 480px) {
+  main { margin: 1.5rem auto; }
+  .cartao { padding: 1.25rem; }
+  .marca { font-size: .9rem; }
 }
