@@ -65,3 +65,13 @@ class UsuarioSaida(BaseModel):
     id: int
     nome: str
     email: str
+
+
+class LoginEntrada(BaseModel):
+    email: str
+    senha: str
+
+
+class TokenSaida(BaseModel):
+    access_token: str
+    token_type: str = "bearer"

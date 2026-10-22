@@ -18,6 +18,7 @@ services:
   backend:
     build: ./backend
     environment:
+      JWT_SECRET: ${JWT_SECRET:-}
       POSTGRES_HOST: db
       POSTGRES_DB: ${POSTGRES_DB:-cgp}
       POSTGRES_USER: ${POSTGRES_USER:-cgp}

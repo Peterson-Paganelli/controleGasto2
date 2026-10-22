@@ -2,3 +2,5 @@ fastapi==0.141.1
 uvicorn==0.35.0
 psycopg[binary]==3.2.10
 email-validator==2.3.0
+PyJWT==2.15.1
+httpx==0.28.1

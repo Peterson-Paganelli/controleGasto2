@@ -6,10 +6,11 @@ from unittest.mock import patch
 
 from fastapi import HTTPException
 from fastapi.exceptions import RequestValidationError
+from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
 from app.database import connect, migrate
-from app.main import cadastrar, erro_validacao
+from app.main import app, cadastrar, erro_validacao
 from app.schemas import CadastroEntrada
 from app.senhas import gerar_hash
 
@@ -67,6 +68,18 @@ class CadastroTests(unittest.TestCase):
     def test_resposta_nao_expoe_senha_nem_hash(self):
         corpo = cadastrar(dados()).model_dump()
         self.assertEqual(set(corpo), {"id", "nome", "email"})
+
+    def test_usuario_cadastrado_consegue_fazer_login_e_acessar_me(self):
+        usuario = cadastrar(dados())
+        client = TestClient(app)
+        resposta = client.post("/login", json={"email": usuario.email, "senha": VALIDO["senha"]})
+        self.assertEqual(resposta.status_code, 200)
+        token = resposta.json()["access_token"]
+        resposta = client.get("/me", headers={"Authorization": f"Bearer {token}"})
+        self.assertEqual(resposta.status_code, 200)
+        self.assertEqual(resposta.json(), usuario.model_dump())
+        resposta = client.post("/login", json={"email": usuario.email, "senha": "errada"})
+        self.assertEqual(resposta.status_code, 401)
 
     def test_duplicidade_retorna_409_indicando_o_campo(self):
         cadastrar(dados())
