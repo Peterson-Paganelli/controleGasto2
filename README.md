@@ -55,7 +55,8 @@ não recria as tabelas nem apaga dados. Para mudanças futuras, adicione outro a
 SQL numerado em `backend/migrations/`, sem editar migrations já aplicadas.
 
 O backup e os cadastros de exemplo do ZIP não são importados. As rotinas estão
-disponíveis no banco; telas e endpoints de cadastro, login e gastos ainda não foram implementados.
+disponíveis no banco. O endpoint de cadastro (`POST /cadastro`) já está implementado;
+telas, login e endpoints de gastos ainda não.
 As rotinas usam `dados_pessoal`. Tabelas de versões anteriores, como `users` e
 `alembic_version`, são preservadas caso existam no volume, mas não são sincronizadas
 com a nova estrutura.
@@ -74,10 +75,40 @@ SELECT id_dadopessoal, nome, email FROM dados_pessoal;
 ROLLBACK;
 ```
 
+## Cadastro (S1-03)
+
+`POST /cadastro` recebe JSON com `nome`, `cpf`, `telefone`, `email` e `senha` e chama
+`p_criacaodeconta` (hash bcrypt com custo 12).
+
+Validações: nome obrigatório; CPF com 11 dígitos (pontos e traço são removidos);
+telefone com 10 a 13 dígitos; e-mail válido (normalizado em minúsculas); senha com
+no mínimo 8 caracteres e no máximo 72 bytes.
+
+Respostas:
+
+- `201` com `{"id", "nome", "email"}` (nunca a senha nem o hash);
+- `422` para dados inválidos;
+- `409` para e-mail, CPF ou telefone já cadastrados.
+
+Os erros vêm no formato `{"detail": [{"campo": "email", "mensagem": "E-mail já cadastrado."}]}`.
+
+```sh
+curl -X POST http://localhost:8000/cadastro -H "Content-Type: application/json" \
+  -d '{"nome":"Maria","cpf":"12345678901","telefone":"47900000001","email":"maria@example.com","senha":"senha-de-teste"}'
+```
+
+## Senhas com BCrypt (S1-04)
+
+`backend/app/senhas.py` oferece `gerar_hash(senha)`, `verificar_senha(senha, hash)` e
+`custo_do_hash(hash)`. O cálculo usa o pgcrypto do PostgreSQL, o mesmo das procedures
+`p_criacaodeconta` e `validador_senhaeemail`, com custo 12 por padrão. Custo abaixo de 10
+é recusado, e senhas devem ter de 1 a 72 bytes. O banco também impede gravar senha em
+texto puro: a coluna `dados_pessoal.senha` só aceita hashes BCrypt.
+
 ## Testes do banco
 
-Os testes usam um banco separado com nome terminado em `_test` e desfazem os
-cadastros e gastos ao fim de cada teste. Com os serviços iniciados e os valores
+Os testes usam um banco separado com nome terminado em `_test` e removem os
+cadastros e gastos criados ao fim de cada teste. Com os serviços iniciados e os valores
 padrão de desenvolvimento:
 
 ```sh
@@ -86,7 +117,7 @@ docker compose run --rm -e POSTGRES_DB=cgp_test backend python -m unittest disco
 ```
 
 Crie `cgp_test` apenas na primeira execução. Os testes verificam reaplicação das
-migrations, cadastro, hash e validação de senha, unicidade, chave estrangeira,
+migrations, cadastro (banco e endpoint), hash BCrypt e validação de senha, unicidade, chave estrangeira,
 valores monetários, exclusão por dono e saúde da conexão.
 
 ## Sprint 1
