@@ -4,8 +4,9 @@ import psycopg
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from fastapi.security import HTTPAuthorizationCredentials
 
-from app.auth import criar_token, usuario_autenticado
+from app.auth import bearer, criar_token, encerrar_sessao, usuario_autenticado
 from app.database import connect, migrate
 from app.schemas import CadastroEntrada, LoginEntrada, TokenSaida, UsuarioSaida
 from app.senhas import gerar_hash, verificar_senha
@@ -91,11 +92,19 @@ def login(dados: LoginEntrada) -> TokenSaida:
                 detail="E-mail ou senha inválidos.",
                 headers={"WWW-Authenticate": "Bearer"},
             )
+        return TokenSaida(access_token=criar_token(linha[0]))
     except psycopg.OperationalError as error:
         raise HTTPException(status_code=503, detail="Banco indisponível") from error
-    return TokenSaida(access_token=criar_token(linha[0]))
 
 
 @app.get("/me", response_model=UsuarioSaida)
 def consultar_usuario(usuario: UsuarioSaida = Depends(usuario_autenticado)) -> UsuarioSaida:
     return usuario
+
+
+@app.post("/logout", status_code=204, dependencies=[Depends(usuario_autenticado)])
+def logout(credenciais: HTTPAuthorizationCredentials = Depends(bearer)) -> None:
+    try:
+        encerrar_sessao(credenciais.credentials)
+    except psycopg.OperationalError as error:
+        raise HTTPException(status_code=503, detail="Banco indisponível") from error

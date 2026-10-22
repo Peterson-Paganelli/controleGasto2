@@ -80,6 +80,14 @@ class CadastroTests(unittest.TestCase):
         self.assertEqual(resposta.json(), usuario.model_dump())
         resposta = client.post("/login", json={"email": usuario.email, "senha": "errada"})
         self.assertEqual(resposta.status_code, 401)
+        segunda_sessao = client.post("/login", json={"email": usuario.email, "senha": VALIDO["senha"]})
+        outro_token = segunda_sessao.json()["access_token"]
+        self.assertNotEqual(token, outro_token)
+        headers = {"Authorization": f"Bearer {token}"}
+        self.assertEqual(client.post("/logout", headers=headers).status_code, 204)
+        self.assertEqual(client.get("/me", headers=headers).status_code, 401)
+        resposta = client.get("/me", headers={"Authorization": f"Bearer {outro_token}"})
+        self.assertEqual(resposta.status_code, 200)
 
     def test_duplicidade_retorna_409_indicando_o_campo(self):
         cadastrar(dados())

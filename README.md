@@ -35,6 +35,7 @@ A estrutura foi adaptada dos scripts de `BD_EngSowt_Trabalho.zip` e está versio
 - `dados_pessoal`: ID, nome, CPF, telefone, e-mail e hash da senha. CPF, telefone e e-mail são únicos.
 - `tabela_gastos`: ID, usuário, valor, data e descrição. A chave estrangeira vincula o gasto ao usuário.
 - `schema_migrations`: registra as migrations já aplicadas.
+- `sessoes`: sessões ativas, criadas no login e removidas no logout (migration `002_sessoes.sql`).
 - `p_criacaodeconta`: cadastra o usuário, normaliza o e-mail e gera o hash bcrypt com `pgcrypto`.
 - `validador_senhaeemail`: retorna `true` ou `false` ao verificar as credenciais.
 - `p_adicaotabelagastos`: adiciona um gasto.
@@ -132,7 +133,7 @@ Sem essa variável, a API gera uma chave temporária a cada inicialização.
 Em `http://localhost:5173`, use **Criar conta** para cadastrar nome, CPF, telefone,
 e-mail e senha. Após o cadastro, a tela pede o login e mantém o e-mail preenchido.
 Ao entrar, a interface consulta `/me` com o token e mostra o nome e o e-mail da conta.
-O botão **Sair da conta** encerra a sessão na interface.
+O botão **Sair da conta** encerra a sessão na API e retorna ao login.
 
 Os campos obrigatórios, e-mail, CPF, telefone e tamanho da senha são validados.
 Erros de cadastro, credenciais e conexão aparecem na tela, sem mostrar respostas
@@ -145,6 +146,22 @@ As chamadas usam `/api`, encaminhado pelo proxy do Vite para o backend. No Docke
 `frontend/` (ou os comandos equivalentes do npm).
 Para conferir o frontend, execute `pnpm test` e `pnpm build` nessa pasta.
 Os testes da comunicação com a API usam respostas simuladas.
+
+## Área interna e logout (S1-08)
+
+O frontend tem as rotas `/login`, `/cadastro` e `/app`. A área interna em `/app`
+mostra a identificação da conta e uma navegação inicial. Visitantes são direcionados
+ao login. Antes de exibir os dados, a interface confirma a sessão em `/me`.
+
+`POST /logout`, com `Authorization: Bearer <access_token>`, remove a sessão do
+banco e retorna `204`, sem corpo. O token dessa sessão passa a ser rejeitado com
+`401`, mesmo que ainda não tenha expirado. Outros logins da mesma conta continuam
+válidos. Cada token contém um identificador de sessão (`jti`).
+
+Após sair, abrir `/app` ou usar o botão Voltar não libera a área interna.
+O token continua apenas na memória; recarregar a página exige novo login.
+Se a API falhar durante o logout, a interface informa o erro e permite tentar
+novamente, sem indicar que a sessão foi encerrada.
 
 ## Testes do banco
 

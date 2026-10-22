@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { afterEach, test } from 'node:test'
-import { api } from '../src/api.ts'
+import { api, ErroApi } from '../src/api.ts'
 
 const fetchOriginal = globalThis.fetch
 afterEach(() => { globalThis.fetch = fetchOriginal })
@@ -55,4 +55,21 @@ test('falhas do servidor e respostas inesperadas usam mensagem genérica', async
 test('falha de conexão não expõe a mensagem técnica', async () => {
   globalThis.fetch = async () => { throw new Error('detalhe interno') }
   await assert.rejects(api('/login'), { message: 'Não foi possível conectar ao serviço. Tente novamente.' })
+})
+
+test('logout envia o token e aceita a resposta 204 sem corpo', async () => {
+  globalThis.fetch = async (url, opcoes) => {
+    assert.equal(url, '/api/logout')
+    assert.equal(opcoes.method, 'POST')
+    assert.equal(opcoes.headers.Authorization, 'Bearer token-de-teste')
+    return new Response(null, { status: 204 })
+  }
+  assert.equal(await api('/logout', {
+    method: 'POST', headers: { Authorization: 'Bearer token-de-teste' },
+  }), undefined)
+})
+
+test('identifica o 401 para a interface encerrar a sessão local', async () => {
+  globalThis.fetch = async () => Response.json({ detail: 'token inválido' }, { status: 401 })
+  await assert.rejects(api('/me'), (erro) => erro instanceof ErroApi && erro.status === 401)
 })

@@ -41,6 +41,19 @@ small { display: block; margin-top: .4rem; color: #586b78; font-size: .8rem; }
 .email-usuario { padding: .8rem; background: #f2f6f7; border-radius: .5rem; overflow-wrap: anywhere; }
 .rodape { text-align: center; color: #586b78; font-size: .8rem; margin-top: 1.5rem; }
 
+.area-interna { max-width: 64rem; margin-top: 2rem; }
+.barra-interna { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.barra-interna .marca { margin: 0; }
+.botao-sair { padding: .6rem 1rem; color: #176557; background: white; border: 1px solid #b9c9cf; border-radius: .5rem; font-weight: 600; }
+.botao-sair:hover { background: #eaf6f0; }
+.menu-interno { margin: 1.5rem 0 2rem; padding-bottom: .8rem; border-bottom: 1px solid #dbe4e7; }
+.menu-interno a { color: #176557; text-decoration: none; font-weight: 600; padding-bottom: .8rem; border-bottom: 2px solid #176557; }
+a:focus-visible { outline: 3px solid #75bfae; outline-offset: 3px; }
+.boas-vindas { margin-bottom: 2rem; }
+.boas-vindas h1 { margin-top: .5rem; }
+.area-interna h2 { margin: 0 0 .6rem; font-size: 1.15rem; }
+.area-interna .email-usuario { margin-bottom: 0; }
+
 @media (max-width: 480px) {
   main { margin: 1.5rem auto; }
   .cartao { padding: 1.25rem; }
