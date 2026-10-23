@@ -7,6 +7,7 @@
 }
 
 * { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 body { margin: 0; }
 
 main {
@@ -23,14 +24,14 @@ h1 { margin: 1.5rem 0 .4rem; font-size: 1.65rem; line-height: 1.25; overflow-wra
 .modos { display: flex; gap: .25rem; padding: .25rem; border-radius: .6rem; background: #eef3f4; }
 button, input { font: inherit; }
 button { cursor: pointer; }
-.modos button { flex: 1; padding: .6rem; border: 0; border-radius: .4rem; background: transparent; color: #465b68; font-weight: 600; }
+.modos button { flex: 1; min-width: 0; min-height: 2.75rem; padding: .6rem; border: 0; border-radius: .4rem; background: transparent; color: #465b68; font-weight: 600; }
 .modos button[aria-pressed="true"] { background: white; color: #176557; box-shadow: 0 1px 4px #172c3d12; }
 fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 label { display: block; margin: 1rem 0 .35rem; font-size: .9rem; font-weight: 600; }
-input { width: 100%; padding: .7rem .8rem; border: 1px solid #b9c9cf; border-radius: .5rem; background: white; color: #172c3d; }
+input { width: 100%; min-height: 2.75rem; padding: .7rem .8rem; border: 1px solid #b9c9cf; border-radius: .5rem; background: white; color: #172c3d; }
 input::placeholder { color: #758590; }
 input:focus-visible, button:focus-visible { outline: 3px solid #75bfae; outline-offset: 2px; }
-.principal { width: 100%; margin-top: 1.5rem; padding: .75rem; border: 0; border-radius: .5rem; background: #176557; color: white; font-weight: 600; }
+.principal { width: 100%; min-height: 2.75rem; margin-top: 1.5rem; padding: .75rem; border: 0; border-radius: .5rem; background: #176557; color: white; font-weight: 600; }
 .principal:hover { background: #104e43; }
 button:disabled, fieldset:disabled { cursor: wait; opacity: .65; }
 small { display: block; margin-top: .4rem; color: #586b78; font-size: .8rem; }
@@ -43,19 +44,39 @@ small { display: block; margin-top: .4rem; color: #586b78; font-size: .8rem; }
 
 .area-interna { max-width: 64rem; margin-top: 2rem; }
 .barra-interna { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
-.barra-interna .marca { margin: 0; }
-.botao-sair { padding: .6rem 1rem; color: #176557; background: white; border: 1px solid #b9c9cf; border-radius: .5rem; font-weight: 600; }
+.barra-interna .marca { flex: 1 1 14rem; justify-content: flex-start; margin: 0; min-width: 0; }
+.botao-sair { min-height: 2.75rem; padding: .6rem 1rem; color: #176557; background: white; border: 1px solid #b9c9cf; border-radius: .5rem; font-weight: 600; }
 .botao-sair:hover { background: #eaf6f0; }
-.menu-interno { margin: 1.5rem 0 2rem; padding-bottom: .8rem; border-bottom: 1px solid #dbe4e7; }
-.menu-interno a { color: #176557; text-decoration: none; font-weight: 600; padding-bottom: .8rem; border-bottom: 2px solid #176557; }
+.menu-interno { margin: 1.5rem 0 2rem; border-bottom: 1px solid #dbe4e7; }
+.menu-interno a { display: inline-flex; align-items: center; min-height: 2.75rem; margin-bottom: -1px; color: #176557; text-decoration: none; font-weight: 600; border-bottom: 2px solid #176557; }
 a:focus-visible { outline: 3px solid #75bfae; outline-offset: 3px; }
 .boas-vindas { margin-bottom: 2rem; }
 .boas-vindas h1 { margin-top: .5rem; }
 .area-interna h2 { margin: 0 0 .6rem; font-size: 1.15rem; }
 .area-interna .email-usuario { margin-bottom: 0; }
 
+/* Celular (a partir de 360px): conteúdo em uma coluna, botões na largura toda. */
 @media (max-width: 480px) {
   main { margin: 1.5rem auto; }
   .cartao { padding: 1.25rem; }
   .marca { font-size: .9rem; }
+  h1 { font-size: 1.45rem; }
+  .botao-sair { width: 100%; }
+}
+
+/* Tablet em diante: mais respiro. */
+@media (min-width: 768px) {
+  main { padding: 0 1.5rem; }
+  .cartao { padding: 2.25rem; }
+}
+
+/* Desktop: a área autenticada usa duas colunas. */
+@media (min-width: 900px) {
+  .painel { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 2rem; align-items: start; }
+  .painel .boas-vindas { margin-bottom: 0; }
+}
+
+/* Celular na horizontal: pouca altura, então menos margem vertical. */
+@media (max-height: 480px) and (orientation: landscape) {
+  main { margin: 1rem auto; }
 }

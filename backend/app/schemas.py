@@ -1,7 +1,9 @@
 import re
+from datetime import date
+from decimal import Decimal
 
 from email_validator import EmailNotValidError, validate_email
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_serializer, field_validator
 
 SENHA_MIN_CARACTERES = 8
 SENHA_MAX_BYTES = 72  # limite do bcrypt, o mesmo validado no banco
@@ -75,3 +77,51 @@ class LoginEntrada(BaseModel):
 class TokenSaida(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+
+VALOR_LIMITE = Decimal(10) ** 12  # numeric(14, 2) comporta até 999.999.999.999,99
+DESCRICAO_MAX_CARACTERES = 200
+
+
+class GastoEntrada(BaseModel):
+    """Dados de um gasto. O dono nunca vem do corpo: é sempre o usuário autenticado."""
+
+    valor: Decimal
+    data: date
+    descricao: str
+
+    @field_validator("valor")
+    @classmethod
+    def validar_valor(cls, valor: Decimal) -> Decimal:
+        if not valor.is_finite():
+            raise ValueError("Informe um valor numérico válido.")
+        if valor <= 0:
+            raise ValueError("O valor deve ser maior que zero.")
+        if valor.as_tuple().exponent < -2:
+            raise ValueError("O valor deve ter no máximo 2 casas decimais.")
+        if valor >= VALOR_LIMITE:
+            raise ValueError("O valor informado é grande demais.")
+        return valor.quantize(Decimal("0.01"))
+
+    @field_validator("descricao")
+    @classmethod
+    def validar_descricao(cls, valor: str) -> str:
+        valor = valor.strip()
+        if not valor:
+            raise ValueError("Informe a descrição.")
+        if len(valor) > DESCRICAO_MAX_CARACTERES:
+            raise ValueError(
+                f"A descrição deve ter no máximo {DESCRICAO_MAX_CARACTERES} caracteres."
+            )
+        return valor
+
+
+class GastoSaida(BaseModel):
+    id: int
+    valor: Decimal
+    data: date
+    descricao: str
+
+    @field_serializer("valor")
+    def serializar_valor(self, valor: Decimal) -> str:
+        return f"{valor:.2f}"  # texto com 2 casas, sem perda de precisão

@@ -8,6 +8,7 @@ from fastapi.security import HTTPAuthorizationCredentials
 
 from app.auth import bearer, criar_token, encerrar_sessao, usuario_autenticado
 from app.database import connect, migrate
+from app.gastos import router as gastos_router
 from app.schemas import CadastroEntrada, LoginEntrada, TokenSaida, UsuarioSaida
 from app.senhas import gerar_hash, verificar_senha
 
@@ -26,6 +27,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="CGP API", lifespan=lifespan)
+app.include_router(gastos_router)
 
 
 @app.exception_handler(RequestValidationError)
@@ -37,6 +39,12 @@ async def erro_validacao(request: Request, exc: RequestValidationError) -> JSONR
             mensagem = "Campo obrigatório."
         elif erro["type"] == "string_type":
             mensagem = "Valor inválido: envie um texto."
+        elif erro["type"].startswith("decimal"):
+            mensagem = "Informe um valor numérico válido."
+        elif erro["type"].startswith("date"):
+            mensagem = "Informe uma data válida (AAAA-MM-DD)."
+        elif erro["loc"][0] == "path":
+            mensagem = "Identificador inválido."
         else:
             mensagem = str(erro["msg"]).removeprefix("Value error, ")
         erros.append(
