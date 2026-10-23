@@ -57,7 +57,8 @@ SQL numerado em `backend/migrations/`, sem editar migrations já aplicadas.
 
 O backup e os cadastros de exemplo do ZIP não são importados. As rotinas estão
 disponíveis no banco. Os endpoints de cadastro (`POST /cadastro`) e login (`POST /login`) já estão implementados;
-As telas de cadastro e login estão integradas; os endpoints de gastos ainda não.
+As telas de cadastro e login estão integradas. Os endpoints de gastos estão disponíveis
+como recurso de teste de isolamento (S1-06), ainda sem interface de gastos.
 As rotinas usam `dados_pessoal`. Tabelas de versões anteriores, como `users` e
 `alembic_version`, são preservadas caso existam no volume, mas não são sincronizadas
 com a nova estrutura.
@@ -128,6 +129,32 @@ para manter os tokens após reiniciar e compartilhar a chave entre instâncias.
 Você pode gerar uma com `python -c "import secrets; print(secrets.token_hex(32))"`.
 Sem essa variável, a API gera uma chave temporária a cada inicialização.
 
+## Isolamento de dados por usuário (S1-06)
+
+`/gastos` é o recurso usado nesta sprint para aplicar a identidade autenticada às
+consultas e operações financeiras. Todas as rotas exigem `Authorization: Bearer <access_token>`;
+sem token válido a resposta é `401`.
+
+- `GET /gastos`: lista os gastos do usuário autenticado.
+- `POST /gastos`: cria um gasto (`valor`, `data` e `descricao`). O dono é sempre o usuário do token.
+- `GET /gastos/{id}`: visualiza um gasto.
+- `PUT /gastos/{id}`: altera um gasto.
+- `DELETE /gastos/{id}`: exclui um gasto (`204`).
+
+O `valor` é um número positivo com no máximo 2 casas decimais e é devolvido como texto
+(`"19.90"`). A `data` usa o formato `AAAA-MM-DD`.
+
+O isolamento é feito nas próprias consultas SQL, que sempre filtram por
+`id_dadospessoal` do usuário do token. Se o usuário A tentar acessar, alterar ou excluir
+um registro do usuário B, a API responde `404` (a mesma resposta de um registro inexistente),
+sem revelar que o registro existe. O dono nunca é lido do corpo nem da URL.
+
+Para novos recursos com dados por usuário, adicione as rotas ao router (ou use
+`Depends(usuario_autenticado)`) e filtre toda consulta pelo ID do usuário autenticado.
+
+`tests/test_gastos_isolamento.py` valida o isolamento com dois usuários, usando banco e
+autenticação reais (execute pelo comando de testes abaixo, no banco `cgp_test`).
+
 ## Formulários de cadastro e login (S1-07)
 
 Em `http://localhost:5173`, use **Criar conta** para cadastrar nome, CPF, telefone,
@@ -162,6 +189,54 @@ Após sair, abrir `/app` ou usar o botão Voltar não libera a área interna.
 O token continua apenas na memória; recarregar a página exige novo login.
 Se a API falhar durante o logout, a interface informa o erro e permite tentar
 novamente, sem indicar que a sessão foi encerrada.
+
+## Responsividade (S1-09)
+
+As telas de cadastro, login e área interna funcionam de 360 px (celular) até desktop:
+
+- **Celular (até 480 px):** uma coluna, botões na largura toda e margens menores.
+- **Tablet (768 px ou mais):** mais espaço interno nos cartões.
+- **Desktop (900 px ou mais):** a área interna usa duas colunas (boas-vindas e dados da conta).
+- Campos, botões e o link do menu têm no mínimo 44 px de altura para facilitar o toque.
+- Nomes e e-mails longos quebram linha em vez de estourar a tela, e não há rolagem horizontal.
+- Os tamanhos usam `rem`, então o layout também se mantém com o texto ampliado no navegador.
+
+Para conferir manualmente, abra `http://localhost:5173`, pressione F12 e ative o modo de
+dispositivo (Ctrl+Shift+M). Teste as três telas em 360 px, 768 px e em tela cheia: não deve
+aparecer barra de rolagem horizontal, e todos os campos e botões devem estar visíveis.
+Repita ampliando o texto do navegador (Ctrl e +) até 200%.
+
+## Testes de autenticação e segurança (S1-10)
+
+`backend/tests/test_integracao_seguranca.py` testa a API de verdade (TestClient) com o
+PostgreSQL de teste, sem simular banco nem senhas. Cobertura por critério do card:
+
+| Critério | Onde é testado |
+| --- | --- |
+| Cadastro duplicado é rejeitado | `test_cadastro_duplicado_e_rejeitado` (e-mail, CPF e telefone, com `409`) |
+| Senha incorreta é rejeitada | `test_senha_incorreta_e_rejeitada_sem_revelar_se_o_email_existe` |
+| BCrypt | `test_senha_e_gravada_somente_como_hash_bcrypt_com_custo_minimo` e `test_senhas.py` |
+| Acesso sem autenticação | `test_toda_rota_exige_autenticacao_exceto_as_publicas` |
+| Acesso a dados de outro usuário | `test_acesso_aos_dados_de_outro_usuario_e_rejeitado` e `test_gastos_isolamento.py` |
+
+Também verificam: tokens adulterados, assinados com outra chave, com algoritmo `none` ou de
+outra sessão; sessão expirada e usuário removido; logout; senha de 73 bytes não aceita por
+truncamento do bcrypt; textos com SQL tratados como dados; e respostas e erros que nunca
+repetem a senha nem o hash.
+
+`test_toda_rota_exige_autenticacao_exceto_as_publicas` percorre todas as rotas da API,
+incluindo routers aninhados e seus prefixos, com `iter_route_contexts`. Se você
+criar uma rota nova sem `Depends(usuario_autenticado)`, ele falha. Rotas públicas de
+propósito precisam ser listadas em `ROTAS_PUBLICAS` no próprio teste.
+
+Para executar todos os testes do backend (inclui os desta seção):
+
+```sh
+docker compose run --rm -e POSTGRES_DB=cgp_test backend python -m unittest discover -s tests -v
+```
+
+Ainda não existe e, portanto, não é testado: limite de tentativas de login (proteção contra
+força bruta) e renovação de token.
 
 ## Testes do banco
 
