@@ -29,9 +29,6 @@ A API se conecta ao PostgreSQL e aplica as migrations automaticamente na inicial
 
 ## Banco de dados
 
-A estrutura foi adaptada dos scripts de `BD_EngSowt_Trabalho.zip` e está versionada em
-`backend/migrations/001_usuarios_e_gastos.sql`:
-
 - `dados_pessoal`: ID, nome, CPF, telefone, e-mail e hash da senha. CPF, telefone e e-mail são únicos.
 - `tabela_gastos`: ID, usuário, valor, data e descrição. A chave estrangeira vincula o gasto ao usuário.
 - `schema_migrations`: registra as migrations já aplicadas.
