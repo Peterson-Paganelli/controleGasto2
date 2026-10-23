@@ -255,4 +255,7 @@ com as dependências de `requirements.txt` instaladas).
 
 ## Sprint 1
 
+A validação integrada do item S1-11, seus resultados e os comandos para executar
+os serviços e testes E2E estão em [VALIDACAO_SPRINT_1.md](VALIDACAO_SPRINT_1.md).
+
 As tarefas estão em [KANBAN_SPRINT_1.md](KANBAN_SPRINT_1.md) e no [quadro Trello](https://trello.com/b/EQFx2d39/controle-de-gasto-pessoal-cgp).

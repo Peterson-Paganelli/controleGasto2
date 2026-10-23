@@ -1,0 +1,36 @@
+# Ambiente separado para não alterar os dados usados pelo grupo.
+name: cgp-sprint1-testes
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: cgp_test
+      POSTGRES_USER: cgp
+      POSTGRES_PASSWORD: cgp_local_test
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cgp -d cgp_test"]
+      interval: 3s
+      retries: 20
+
+  backend:
+    build: ./backend
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_DB: cgp_test
+      POSTGRES_USER: cgp
+      POSTGRES_PASSWORD: cgp_local_test
+    ports:
+      - "127.0.0.1:58000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    environment:
+      API_URL: http://backend:8000
+    ports:
+      - "127.0.0.1:55173:5173"
+    depends_on:
+      - backend
