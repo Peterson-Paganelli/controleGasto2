@@ -2,6 +2,30 @@
 
 Estrutura inicial da sprint 1: React com TypeScript, API FastAPI e PostgreSQL.
 
+## Cadastros financeiros (S2-01 a S2-04)
+
+Após entrar, use as abas **Entradas**, **Gastos**, **Contas bancárias** e **Cartões**.
+Cada aba tem um formulário e a lista dos registros salvos. Nos gastos, também é
+possível editar e excluir (com confirmação).
+
+- Entradas: descrição, valor e data; conta e cartão são opcionais.
+- Gastos: descrição, valor, data e categoria; vencimento, conta e cartão são opcionais.
+- Contas: banco, agência e número. A mesma agência/número não se repete para o mesmo usuário.
+- Cartões: nome, fechamento entre 1 e 31 e conta opcional. O fechamento é informativo.
+
+As APIs `GET/POST /entradas`, `GET/POST /contas` e `GET/POST /cartoes` exigem
+o token do login. O CRUD `/gastos` inclui os novos campos. Conta e cartão vinculados
+devem pertencer ao usuário autenticado; essa regra também é garantida no banco.
+A migration `003_lancamentos_contas_cartoes.sql` é aplicada automaticamente,
+preservando gastos existentes com categoria **Outros**.
+
+Os testes de backend estão em `backend/tests/test_financeiro.py`; os fluxos de
+interface, em `frontend/e2e/financeiro.spec.mjs` (360 px e desktop).
+Use os comandos de testes abaixo, com um banco separado terminado em `_test`.
+Para executar os E2E, inicie `docker compose -f compose.testes.yaml up --build -d`
+e execute `pnpm test:e2e` em `frontend/`. O navegador Chromium do Playwright deve
+estar instalado (`pnpm exec playwright install chromium`).
+
 ## Como iniciar
 
 1. Instale o Docker Desktop e deixe-o aberto.
@@ -54,8 +78,8 @@ SQL numerado em `backend/migrations/`, sem editar migrations já aplicadas.
 
 O backup e os cadastros de exemplo do ZIP não são importados. As rotinas estão
 disponíveis no banco. Os endpoints de cadastro (`POST /cadastro`) e login (`POST /login`) já estão implementados;
-As telas de cadastro e login estão integradas. Os endpoints de gastos estão disponíveis
-como recurso de teste de isolamento (S1-06), ainda sem interface de gastos.
+As telas de cadastro e login estão integradas. O CRUD de gastos, inicialmente usado
+para testar isolamento (S1-06), agora tem interface com categoria e vencimento opcional.
 As rotinas usam `dados_pessoal`. Tabelas de versões anteriores, como `users` e
 `alembic_version`, são preservadas caso existam no volume, mas não são sincronizadas
 com a nova estrutura.

@@ -3,7 +3,7 @@ from datetime import date
 from decimal import Decimal
 
 from email_validator import EmailNotValidError, validate_email
-from pydantic import BaseModel, field_serializer, field_validator
+from pydantic import BaseModel, Field, field_serializer, field_validator
 
 SENHA_MIN_CARACTERES = 8
 SENHA_MAX_BYTES = 72  # limite do bcrypt, o mesmo validado no banco
@@ -89,6 +89,18 @@ class GastoEntrada(BaseModel):
     valor: Decimal
     data: date
     descricao: str
+    categoria: str = Field(default="Outros", min_length=1, max_length=100)
+    vencimento: date | None = None
+    conta_id: int | None = Field(default=None, ge=1, le=2_147_483_647)
+    cartao_id: int | None = Field(default=None, ge=1, le=2_147_483_647)
+
+    @field_validator("categoria")
+    @classmethod
+    def validar_categoria(cls, valor: str) -> str:
+        valor = valor.strip()
+        if not valor:
+            raise ValueError("Informe a categoria.")
+        return valor
 
     @field_validator("valor")
     @classmethod
@@ -121,7 +133,70 @@ class GastoSaida(BaseModel):
     valor: Decimal
     data: date
     descricao: str
+    categoria: str = "Outros"
+    vencimento: date | None = None
+    conta_id: int | None = None
+    cartao_id: int | None = None
 
     @field_serializer("valor")
     def serializar_valor(self, valor: Decimal) -> str:
         return f"{valor:.2f}"  # texto com 2 casas, sem perda de precisão
+
+
+class EntradaFinanceira(BaseModel):
+    valor: Decimal
+    data: date
+    descricao: str
+    conta_id: int | None = Field(default=None, ge=1, le=2_147_483_647)
+    cartao_id: int | None = Field(default=None, ge=1, le=2_147_483_647)
+
+    @field_validator("valor")
+    @classmethod
+    def validar_valor(cls, valor: Decimal) -> Decimal:
+        return GastoEntrada.validar_valor(valor)
+
+    @field_validator("descricao")
+    @classmethod
+    def validar_descricao(cls, valor: str) -> str:
+        return GastoEntrada.validar_descricao(valor)
+
+
+class EntradaFinanceiraSaida(EntradaFinanceira):
+    id: int
+
+    @field_serializer("valor")
+    def serializar_valor(self, valor: Decimal) -> str:
+        return f"{valor:.2f}"
+
+
+class ContaEntrada(BaseModel):
+    banco: str = Field(min_length=1, max_length=100)
+    agencia: str = Field(min_length=1, max_length=30)
+    numero: str = Field(min_length=1, max_length=30)
+
+    @field_validator("banco", "agencia", "numero")
+    @classmethod
+    def validar_texto(cls, valor: str) -> str:
+        valor = valor.strip()
+        if not valor:
+            raise ValueError("Preencha o campo.")
+        return valor
+
+
+class ContaSaida(ContaEntrada):
+    id: int
+
+
+class CartaoEntrada(BaseModel):
+    nome: str = Field(min_length=1, max_length=100)
+    dia_fechamento: int = Field(strict=True, ge=1, le=31)
+    conta_id: int | None = Field(default=None, ge=1, le=2_147_483_647)
+
+    @field_validator("nome")
+    @classmethod
+    def validar_nome(cls, valor: str) -> str:
+        return ContaEntrada.validar_texto(valor)
+
+
+class CartaoSaida(CartaoEntrada):
+    id: int

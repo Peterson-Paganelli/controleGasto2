@@ -9,6 +9,7 @@ from fastapi.security import HTTPAuthorizationCredentials
 from app.auth import bearer, criar_token, encerrar_sessao, usuario_autenticado
 from app.database import connect, migrate
 from app.gastos import router as gastos_router
+from app.financeiro import router as financeiro_router
 from app.schemas import CadastroEntrada, LoginEntrada, TokenSaida, UsuarioSaida
 from app.senhas import gerar_hash, verificar_senha
 
@@ -28,6 +29,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="CGP API", lifespan=lifespan)
 app.include_router(gastos_router)
+app.include_router(financeiro_router)
 
 
 @app.exception_handler(RequestValidationError)
