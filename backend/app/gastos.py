@@ -18,13 +18,14 @@ from fastapi import APIRouter, Depends, HTTPException, Path
 from app.auth import usuario_autenticado
 from app.database import connect
 from app.schemas import GastoEntrada, GastoSaida, UsuarioSaida
+from app.vinculos import validar_vinculos
 
 # A dependência no router garante a autenticação mesmo em rotas futuras.
 router = APIRouter(
     prefix="/gastos", tags=["gastos"], dependencies=[Depends(usuario_autenticado)]
 )
 
-COLUNAS = "id_gastos, valor, data_tabela, descricao"
+COLUNAS = "id_gastos, valor, data_tabela, descricao, categoria, vencimento, conta_id, cartao_id"
 ID_GASTO = Path(ge=1, le=2_147_483_647)
 
 
@@ -38,7 +39,8 @@ def _banco():
 
 
 def _saida(linha: tuple) -> GastoSaida:
-    return GastoSaida(id=linha[0], valor=linha[1], data=linha[2], descricao=linha[3])
+    return GastoSaida(id=linha[0], valor=linha[1], data=linha[2], descricao=linha[3],
+                     categoria=linha[4], vencimento=linha[5], conta_id=linha[6], cartao_id=linha[7])
 
 
 def _nao_encontrado() -> HTTPException:
@@ -61,10 +63,11 @@ def criar(
     dados: GastoEntrada, usuario: UsuarioSaida = Depends(usuario_autenticado)
 ) -> GastoSaida:
     with _banco() as conexao:
+        validar_vinculos(conexao, usuario.id, dados.conta_id, dados.cartao_id)
         linha = conexao.execute(
-            "INSERT INTO public.tabela_gastos (id_dadospessoal, valor, data_tabela, descricao) "
-            f"VALUES (%s, %s, %s, %s) RETURNING {COLUNAS}",
-            (usuario.id, dados.valor, dados.data, dados.descricao),
+            "INSERT INTO public.tabela_gastos (id_dadospessoal, valor, data_tabela, descricao, categoria, vencimento, conta_id, cartao_id) "
+            f"VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING {COLUNAS}",
+            (usuario.id, dados.valor, dados.data, dados.descricao, dados.categoria, dados.vencimento, dados.conta_id, dados.cartao_id),
         ).fetchone()
     return _saida(linha)
 
@@ -91,10 +94,19 @@ def alterar(
     usuario: UsuarioSaida = Depends(usuario_autenticado),
 ) -> GastoSaida:
     with _banco() as conexao:
+        existe = conexao.execute(
+            "SELECT id_gastos FROM public.tabela_gastos WHERE id_gastos = %s AND id_dadospessoal = %s",
+            (id_gasto, usuario.id),
+        ).fetchone()
+        if existe is None:
+            raise _nao_encontrado()
+        validar_vinculos(conexao, usuario.id, dados.conta_id, dados.cartao_id)
         linha = conexao.execute(
-            "UPDATE public.tabela_gastos SET valor = %s, data_tabela = %s, descricao = %s "
+            "UPDATE public.tabela_gastos SET valor = %s, data_tabela = %s, descricao = %s, "
+            "categoria = %s, vencimento = %s, conta_id = %s, cartao_id = %s "
             f"WHERE id_gastos = %s AND id_dadospessoal = %s RETURNING {COLUNAS}",
-            (dados.valor, dados.data, dados.descricao, id_gasto, usuario.id),
+            (dados.valor, dados.data, dados.descricao, dados.categoria, dados.vencimento,
+             dados.conta_id, dados.cartao_id, id_gasto, usuario.id),
         ).fetchone()
     if linha is None:
         raise _nao_encontrado()

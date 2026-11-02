@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { api, ErroApi, type Usuario } from './api'
+import Financeiro from './Financeiro'
 
 type Props = { token: string; aoEncerrar: (mensagem: string) => void }
 
@@ -63,7 +64,7 @@ export default function AreaInterna({ token, aoEncerrar }: Props) {
         erro ? <button type="button" className="principal" onClick={() => setTentativa(tentativa + 1)}>Tentar novamente</button>
           : <p role="status">Verificando sua sessão…</p>
       ) : (
-        <div className="painel">
+        <><div className="painel">
           <section className="boas-vindas" aria-labelledby="titulo">
             <p className="etiqueta">ÁREA INTERNA</p>
             <h1 id="titulo">Olá, {usuario.nome}!</h1>
@@ -74,7 +75,7 @@ export default function AreaInterna({ token, aoEncerrar }: Props) {
             <p className="descricao">Você está conectado com o e-mail:</p>
             <p className="email-usuario">{usuario.email}</p>
           </section>
-        </div>
+        </div><Financeiro token={token} aoEncerrar={aoEncerrar} /></>
       )}
     </main>
   )

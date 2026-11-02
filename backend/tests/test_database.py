@@ -37,7 +37,8 @@ class DatabaseTests(unittest.TestCase):
         rows = self.connection.execute(
             "SELECT version FROM public.schema_migrations ORDER BY version"
         ).fetchall()
-        self.assertEqual(rows, [("001_usuarios_e_gastos.sql",), ("002_sessoes.sql",)])
+        self.assertEqual(rows, [("001_usuarios_e_gastos.sql",), ("002_sessoes.sql",),
+                                ("003_lancamentos_contas_cartoes.sql",)])
 
     def test_account_and_login(self):
         self.create_account()

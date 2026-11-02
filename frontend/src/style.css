@@ -23,6 +23,16 @@ h1 { margin: 1.5rem 0 .4rem; font-size: 1.65rem; line-height: 1.25; overflow-wra
 .descricao { color: #586b78; margin: 0 0 1.5rem; }
 .modos { display: flex; gap: .25rem; padding: .25rem; border-radius: .6rem; background: #eef3f4; }
 button, input { font: inherit; }
+select { font: inherit; width: 100%; min-width: 0; min-height: 2.75rem; padding: .7rem; border: 1px solid #b9c9cf; border-radius: .5rem; background: white; color: #172c3d; }
+select:focus-visible { outline: 3px solid #75bfae; outline-offset: 2px; }
+.financeiro { margin-top: 2rem; }
+.abas-financeiras { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1.5rem; }
+.abas-financeiras button, .acoes-gasto button { min-height: 2.75rem; padding: .6rem 1rem; border: 1px solid #b9c9cf; border-radius: .5rem; background: white; color: #176557; }
+.abas-financeiras button[aria-pressed="true"] { background: #176557; color: white; }
+.lista-financeira { list-style: none; padding: 0; }
+.lista-financeira li { background: white; border: 1px solid #dbe4e7; border-radius: .6rem; padding: 1rem; margin: .75rem 0; overflow-wrap: anywhere; }
+.lista-financeira p { margin: .4rem 0; }
+.acoes-gasto { display: flex; flex-wrap: wrap; gap: .5rem; }
 button { cursor: pointer; }
 .modos button { flex: 1; min-width: 0; min-height: 2.75rem; padding: .6rem; border: 0; border-radius: .4rem; background: transparent; color: #465b68; font-weight: 600; }
 .modos button[aria-pressed="true"] { background: white; color: #176557; box-shadow: 0 1px 4px #172c3d12; }
