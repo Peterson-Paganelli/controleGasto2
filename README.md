@@ -1,8 +1,6 @@
 # Controle de Gasto Pessoal (CGP)
 
-Estrutura inicial da sprint 1: React com TypeScript, API FastAPI e PostgreSQL.
-
-## Cadastros financeiros (S2-01 a S2-04)
+## Cadastros financeiros
 
 Após entrar, use as abas **Entradas**, **Gastos**, **Contas bancárias** e **Cartões**.
 Cada aba tem um formulário e a lista dos registros salvos. Nos gastos, também é
@@ -276,10 +274,5 @@ valores monetários, exclusão por dono e saúde da conexão.
 Os testes HTTP de login usam banco simulado e podem rodar sem PostgreSQL:
 `python -m unittest discover -s tests -p test_login.py -v` (dentro de `backend/`,
 com as dependências de `requirements.txt` instaladas).
-
-## Sprint 1
-
-A validação integrada do item S1-11, seus resultados e os comandos para executar
-os serviços e testes E2E estão em [VALIDACAO_SPRINT_1.md](VALIDACAO_SPRINT_1.md).
 
 As tarefas estão em [KANBAN_SPRINT_1.md](KANBAN_SPRINT_1.md) e no [quadro Trello](https://trello.com/b/EQFx2d39/controle-de-gasto-pessoal-cgp).
